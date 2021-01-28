@@ -1,18 +1,23 @@
 import express from "express";
+import "express-async-errors";
 import { json } from "body-parser";
+import currentUserRouter from "./routes/current-user";
+import signUpRouter from "./routes/signup";
+import signInRouter from "./routes/signin";
+import signOutRouter from "./routes/signout";
+import { errorHandler } from "./middlewares/error-handler";
+import NotFoundError from "./errors/not-found-error";
 
 const app = express();
 app.use(json());
-
-app.get("/api/users/test", (req, res) => {
-  console.log("hit [/api/test]");
-  res.send("Test successful");
+app.use(currentUserRouter);
+app.use(signInRouter);
+app.use(signOutRouter);
+app.use(signUpRouter);
+app.all("*", () => {
+  throw new NotFoundError();
 });
-
-app.get("/api/users/currentuser", (req, res) => {
-  console.log("hit [/api/users/currentuser]");
-  res.send("Hi there!");
-});
+app.use(errorHandler);
 
 app.listen(3000, () => {
   console.log("listening on port 3000 !!!");

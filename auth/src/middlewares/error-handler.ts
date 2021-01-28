@@ -1,0 +1,23 @@
+import { Request, Response, NextFunction } from "express";
+import CustomError from "../errors/custom-error";
+
+/**
+ * Errorhandling middleware. The purpose of this middleware is
+ * to normalize the structure of the error response
+ * @param err
+ * @param req
+ * @param res
+ * @param next
+ */
+export const errorHandler = (
+  err: Error,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  if (err instanceof CustomError) {
+    return res.status(err.statusCode).send({ errors: err.serializeErrors() });
+  }
+
+  res.status(400).send({ message: err.message });
+};
