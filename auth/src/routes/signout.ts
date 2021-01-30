@@ -4,7 +4,8 @@ import express from "express";
 const router = express.Router();
 
 router.post("/api/users/signout", (req, res) => {
-  res.send("Hi there. You've hit the [/api/signout] endpoint");
+  req.session = null;
+  res.send({});
 });
 
 export default router;

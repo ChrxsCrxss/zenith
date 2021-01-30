@@ -1,5 +1,5 @@
 import mongoose, { Mongoose } from "mongoose";
-import Password from "../services/password";
+import PasswordManager from "../services/passwordManager";
 /**
  * An interface that defines the properties required to
  * create a new user
@@ -29,16 +29,32 @@ interface UserDoc extends mongoose.Document {
   password: string;
 }
 
-const userSchema = new mongoose.Schema({
-  email: {
-    type: String,
-    required: true,
+const userSchema = new mongoose.Schema(
+  {
+    email: {
+      type: String,
+      required: true,
+    },
+    password: {
+      type: String,
+      required: true,
+    },
   },
-  password: {
-    type: String,
-    required: true,
-  },
-});
+  {
+    /**
+     * This is really an antipattern. This code determines how information is
+     * displayed to the user, but this should be handled by the view
+     */
+    toJSON: {
+      transform(doc, ret) {
+        ret.id = ret._id;
+        delete ret._id;
+        delete ret.password;
+        delete ret.__v;
+      },
+    },
+  }
+);
 
 /**
  * middleware function implmented in mongoose. It will execute
@@ -51,7 +67,7 @@ userSchema.pre("save", async function (done) {
   // password. Notice the getter and setter methods behing
   // used. The values are stored in a key-value pair.
   if (this.isModified("password")) {
-    const hashed = await Password.toHash(this.get("password"));
+    const hashed = await PasswordManager.toHash(this.get("password"));
     this.set("password", hashed);
   }
 });

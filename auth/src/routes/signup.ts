@@ -1,8 +1,10 @@
 import express, { Request, Response } from "express";
-import { body, validationResult } from "express-validator";
-import { RequestValidationError } from "../errors/request-validation-error";
+import { body } from "express-validator";
+import jwt from "jsonwebtoken";
 import BadRequestError from "../errors/bad-request-error";
 import User from "../models/user";
+import { validateRequest } from "../middlewares/validate-request";
+
 // Returns a router object from the express library
 const router = express.Router();
 
@@ -17,17 +19,8 @@ router.post(
       .isLength({ min: 4, max: 20 })
       .withMessage("Password must be between 4 and 20 characters"),
   ],
+  validateRequest,
   async (req: Request, res: Response) => {
-    // This will get the request object after it has passed through
-    // the validation middleware. If there were errors, they would be
-    // appendd to the request object.
-    const errors = validationResult(req);
-
-    if (!errors.isEmpty()) {
-      console.log("there were errors associated with the request");
-      throw new RequestValidationError(errors.array());
-    }
-
     // Destructuring
     const { email, password } = req.body;
 
@@ -42,7 +35,22 @@ router.post(
     // Persist the new user
     await user.save();
 
-    res.status(200).send(user);
+    // Generate JSON web token (jwt) and store it on the session object
+    const userJwt = jwt.sign(
+      {
+        id: user.id,
+        email: user.email,
+      },
+      process.env.jwt_key!
+    );
+
+    // Store new jwt on session,we are defining the session object because we
+    // are using typescript
+    req.session = {
+      jwt: userJwt,
+    };
+
+    res.status(201).send(user);
   }
 );
 
