@@ -9,8 +9,13 @@ spec:
   rules:
     - host: zenith.io
       http:
+        # paths are matched lazily. Always list the client path last
         paths:
           - path: /api/users/?(.*)
             backend:
               serviceName: auth-srv
+              servicePort: 3000
+          - path: /?(.*)
+            backend:
+              serviceName: client-srv
               servicePort: 3000
