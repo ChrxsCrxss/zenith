@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orders-depl
+# describes how the deployment should behave
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: orders
+  # describes how every pod that is created and managed by the
+  # deployment. The selector (above) and metadata (below) is data
+  # the deployment uses to find the pods it is supposed to manage
+  template:
+    metadata:
+      labels:
+        app: orders
+    # describes how every pod should behave
+    spec:
+      containers:
+        - name: orders
+          image: us.gcr.io/zenith-dev-303000/orders
+          env:
+            - name: NATS_CLIENT_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: MONGO_URI
+              value: "mongodb://orders-mongo-srv:27017/orders"
+            - name: CLUSTER_ID
+              value: "zenith"
+            - name: NATS_SRV_URL
+              value: "http://nats-srv:4222"
+            - name: EXPIRATION_WINDOMW_SECONDS
+              value: "900"
+            - name: jwt_key
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: jwt_key
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orders-srv
+spec:
+  selector:
+    app: orders
+  ports:
+    - name: orders
+      protocol: TCP
+      port: 3000
+      targetPort: 3000

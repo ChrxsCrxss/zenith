@@ -1,6 +1,5 @@
 import express from "express";
-
-import { currentUserHandler } from "../middlewares/current-user-handler";
+import { currentUserHandler } from "@cczenith/common";
 // Returns a router object from the express library
 const router = express.Router();
 

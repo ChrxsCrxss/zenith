@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tickets-depl
+# describes how the deployment should behave
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tickets
+  # describes how every pod that is created and managed by the
+  # deployment. The selector (above) and metadata (below) is data
+  # the deployment uses to find the pods it is supposed to manage
+  template:
+    metadata:
+      labels:
+        app: tickets
+    # describes how every pod should behave
+    spec:
+      containers:
+        - name: tickets
+          image: us.gcr.io/zenith-dev-303000/tickets
+          env:
+            - name: NATS_CLIENT_ID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: MONGO_URI
+              value: "mongodb://tickets-mongo-srv:27017/tickets"
+            - name: CLUSTER_ID
+              value: "zenith"
+            - name: NATS_SRV_URL
+              value: "http://nats-srv:4222"
+            - name: jwt_key
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: jwt_key
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tickets-srv
+spec:
+  selector:
+    app: tickets
+  ports:
+    - name: tickets
+      protocol: TCP
+      port: 3000
+      targetPort: 3000
